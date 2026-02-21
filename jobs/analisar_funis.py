@@ -26,9 +26,10 @@ sys.path.insert(0, str(Path(__file__).parent))
 try:
     import google_docs_editor
     GOOGLE_DOCS_AVAILABLE = True
-except ImportError:
+except ImportError as e:
     GOOGLE_DOCS_AVAILABLE = False
-    print("⚠️  google_docs_editor não disponível - será salvo apenas em arquivo local")
+    print(f"⚠️  google_docs_editor não disponível - será salvo apenas em arquivo local")
+    print(f"   Erro: {e}")
 
 # Configurações
 PLANILHA_HULI = "1QAvr_4aNmtJMCGlr_UgFufMuJWStRgkYKs52pxz6xAk"

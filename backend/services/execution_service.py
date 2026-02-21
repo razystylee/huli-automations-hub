@@ -8,6 +8,7 @@ Handles subprocess execution of Python scripts with:
 - Execution time tracking
 """
 
+import os
 import subprocess
 import logging
 import time
@@ -100,12 +101,17 @@ class ExecutionService:
 
         try:
             # Run subprocess with timeout and output capture
+            # Prepare environment: merge provided env with current environment
+            subprocess_env = os.environ.copy()
+            if env:
+                subprocess_env.update(env)
+
             result = subprocess.run(
                 ["python3", str(full_script_path)],
                 capture_output=True,
                 text=True,
                 timeout=timeout,
-                env=env,
+                env=subprocess_env,
             )
 
             duration = time.time() - start_time
