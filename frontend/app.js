@@ -177,7 +177,7 @@ function createJobCard(job) {
         <div class="job-info">
             <div class="job-info-row">
                 <span class="job-info-label">Schedule:</span>
-                <span class="job-info-value">${job.schedule}</span>
+                <span class="job-info-value">${job.schedule_display || job.schedule}</span>
             </div>
             <div class="job-info-row">
                 <span class="job-info-label">Status:</span>
