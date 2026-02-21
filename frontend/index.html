@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Huli Automations Hub - Mission Control</title>
+    <link rel="stylesheet" href="static/style.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <h1 class="header-title">🚀 Huli Automations Hub - Mission Control</h1>
+            <div class="header-info">
+                <span id="lastUpdated" class="last-updated">Last Updated: --:--:--</span>
+                <span id="schedulerStatus" class="scheduler-status">●</span>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main">
+            <!-- Jobs Section -->
+            <section class="jobs-section">
+                <h2 class="section-title">📋 Jobs Status</h2>
+                <div id="jobsList" class="jobs-grid">
+                    <!-- Jobs will be inserted here by JavaScript -->
+                </div>
+            </section>
+
+            <!-- Logs Section -->
+            <section class="logs-section">
+                <h2 class="section-title">📊 Recent Logs</h2>
+                <div class="logs-controls">
+                    <select id="jobSelect" class="job-select">
+                        <option value="">Select a job to view logs</option>
+                    </select>
+                </div>
+                <div id="logsList" class="logs-table-container">
+                    <table class="logs-table">
+                        <thead>
+                            <tr>
+                                <th>Timestamp</th>
+                                <th>Status</th>
+                                <th>Duration (s)</th>
+                                <th>Output</th>
+                            </tr>
+                        </thead>
+                        <tbody id="logsTableBody">
+                            <tr class="empty-state">
+                                <td colspan="4">Select a job to view logs</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>Huli Automations Hub • Auto-refreshing every 30 seconds</p>
+            <p id="refreshInfo" class="refresh-info"></p>
+        </footer>
+    </div>
+
+    <!-- Loading Spinner -->
+    <div id="loadingSpinner" class="loading-spinner hidden">
+        <div class="spinner"></div>
+    </div>
+
+    <!-- Error Toast -->
+    <div id="errorToast" class="toast error hidden"></div>
+    <div id="successToast" class="toast success hidden"></div>
+
+    <script src="static/app.js"></script>
+</body>
+</html>

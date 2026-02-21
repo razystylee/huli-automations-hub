@@ -1,0 +1,40 @@
+{
+  "jobs": [
+    {
+      "id": "facebook-ads",
+      "name": "Facebook Ads Daily Extraction",
+      "script": "jobs/facebook_ads_to_sheets.py",
+      "schedule": "0 6 * * *",
+      "timeout": 300,
+      "retries": 0,
+      "description": "Extract daily Facebook Ads metrics and save to Google Sheets"
+    },
+    {
+      "id": "hotmart",
+      "name": "Hotmart Daily Sales",
+      "script": "jobs/hotmart_to_sheets.py",
+      "schedule": "15 6 * * *",
+      "timeout": 180,
+      "retries": 0,
+      "description": "Extract daily Hotmart sales data and save to Google Sheets"
+    },
+    {
+      "id": "consolidator",
+      "name": "HULI Consolidator",
+      "script": "jobs/huli_consolidator.py",
+      "schedule": "45 6 * * *",
+      "timeout": 300,
+      "retries": 0,
+      "description": "Consolidate Hotmart and Facebook Ads data with KPI calculations"
+    },
+    {
+      "id": "analise-funis",
+      "name": "Análise Semanal de Funis",
+      "script": "jobs/analisar_funis.py",
+      "schedule": "0 7 * * 3",
+      "timeout": 900,
+      "retries": 0,
+      "description": "Weekly funnel analysis (runs Wednesday at 7:00 AM)"
+    }
+  ]
+}

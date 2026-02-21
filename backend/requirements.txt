@@ -1,0 +1,20 @@
+# Backend dependencies for Huli Automations Hub - Mission Control
+
+# Web Framework
+fastapi>=0.109.0
+uvicorn>=0.27.0
+httpx>=0.24.0
+
+# Job Scheduler
+apscheduler>=3.10.4
+pytz>=2024.1
+
+# Configuration & Environment
+python-dotenv>=1.0.0
+
+# HTTP Requests
+requests>=2.31.0
+
+# Utilities
+pydantic>=2.6.0
+pydantic-settings>=2.2.0
