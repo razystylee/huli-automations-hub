@@ -46,10 +46,10 @@ app.include_router(jobs.router)
 app.include_router(logs.router)
 
 
-# Mount frontend static files
+# Mount frontend static files (must be after API routers)
 frontend_dir = Path(__file__).parent.parent / "frontend"
 if frontend_dir.exists():
-    app.mount("/static", StaticFiles(directory=frontend_dir), name="static")
+    app.mount("/", StaticFiles(directory=frontend_dir, html=True), name="frontend")
 
 
 @app.on_event("startup")
@@ -118,10 +118,7 @@ async def shutdown_event():
         logger.error(f"Error during shutdown: {e}")
 
 
-@app.get("/")
-async def root():
-    """Root endpoint - redirect to dashboard"""
-    return {"message": "Huli Automations Hub - Mission Control", "docs": "/docs"}
+# Root endpoint is served by StaticFiles (index.html)
 
 
 @app.get("/health")
