@@ -1,5 +1,5 @@
 """
-Configuration module for Huli Automations Hub - Mission Control
+Configuration module for Huli-VELLHUB
 
 Loads environment variables from .env file and provides base configuration
 for the FastAPI application and APScheduler.
@@ -19,7 +19,7 @@ class Config:
     """Base configuration class"""
 
     # Application
-    APP_NAME = "Huli Automations Hub - Mission Control"
+    APP_NAME = "Huli-VELLHUB"
     APP_VERSION = "1.0.0"
     DEBUG = os.getenv("DEBUG", "False").lower() == "true"
 

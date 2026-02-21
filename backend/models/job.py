@@ -1,5 +1,5 @@
 """
-Job models and data structures for Huli Automations Hub
+Job models and data structures for Huli-VELLHUB
 
 Defines Pydantic models for Job, JobStatus, and JobLog entities.
 """

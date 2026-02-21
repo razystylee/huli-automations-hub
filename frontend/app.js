@@ -1,5 +1,5 @@
 /**
- * Huli Automations Hub - Mission Control
+ * Huli-VELLHUB
  * Frontend Application Logic
  */
 
@@ -414,7 +414,7 @@ function startAutoRefresh() {
 // ==================== Initialization ====================
 
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('Huli Automations Hub - Mission Control loaded');
+    console.log('Huli-VELLHUB loaded');
     startAutoRefresh();
 
     // Handle visibility change to pause/resume refresh

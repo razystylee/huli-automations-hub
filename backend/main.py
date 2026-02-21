@@ -1,5 +1,5 @@
 """
-Huli Automations Hub - Mission Control
+Huli-VELLHUB
 
 FastAPI application for orchestrating and monitoring automation jobs
 """
