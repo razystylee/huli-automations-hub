@@ -300,6 +300,24 @@ body {
     background: var(--secondary-bg);
 }
 
+.job-name-cell {
+    font-weight: 600;
+    color: var(--primary-color);
+    font-size: 12px;
+    white-space: nowrap;
+    max-width: 150px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.job-header {
+    display: none !important;
+}
+
+.job-header.visible {
+    display: table-cell !important;
+}
+
 .status-badge {
     display: inline-flex;
     align-items: center;

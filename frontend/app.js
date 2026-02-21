@@ -64,6 +64,42 @@ async function fetchJobLogs(jobId) {
     }
 }
 
+async function fetchAllLogs() {
+    try {
+        const allLogs = [];
+
+        // Fetch logs from all jobs
+        for (const job of state.jobs) {
+            const url = `${CONFIG.API_BASE_URL}/api/jobs/${job.id}/logs?limit=${CONFIG.LOG_LIMIT}`;
+            try {
+                const response = await fetch(url);
+                if (response.ok) {
+                    const data = await response.json();
+                    const jobLogs = (data.logs || []).map(log => ({
+                        ...log,
+                        jobId: job.id,
+                        jobName: job.name
+                    }));
+                    allLogs.push(...jobLogs);
+                }
+            } catch (error) {
+                console.warn(`Failed to fetch logs for job ${job.id}:`, error);
+            }
+        }
+
+        // Sort by timestamp descending
+        allLogs.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+        // Keep only the most recent LOG_LIMIT * 2 entries
+        state.logs = allLogs.slice(0, CONFIG.LOG_LIMIT * 2);
+        return true;
+    } catch (error) {
+        console.error('Error fetching all logs:', error);
+        showError(`Failed to fetch logs: ${error.message}`);
+        return false;
+    }
+}
+
 async function executeJob(jobId) {
     try {
         const response = await fetch(`${CONFIG.API_BASE_URL}/api/jobs/${jobId}/execute`, {
@@ -169,12 +205,22 @@ function createJobCard(job) {
 
 function renderLogs() {
     const tbody = logsTableBody;
+    const jobHeader = document.getElementById('jobHeader');
     tbody.innerHTML = '';
 
+    // Show/hide job header based on whether a job is selected
+    if (state.selectedJobId) {
+        jobHeader.classList.remove('visible');
+    } else {
+        jobHeader.classList.add('visible');
+    }
+
     if (state.logs.length === 0) {
+        const emptyMessage = state.selectedJobId ? 'No logs available for this job' : 'No logs available';
+        const colspan = state.selectedJobId ? '4' : '5';
         tbody.innerHTML = `
             <tr class="empty-state">
-                <td colspan="4">No logs available for this job</td>
+                <td colspan="${colspan}">${emptyMessage}</td>
             </tr>
         `;
         return;
@@ -183,16 +229,18 @@ function renderLogs() {
     state.logs.forEach((log) => {
         const row = document.createElement('tr');
         const statusIcon = getStatusIcon(log.status);
+        const jobNameCell = state.selectedJobId ? '' : `<td class="job-name-cell">${log.jobName || '-'}</td>`;
 
         row.innerHTML = `
             <td>${formatDateTime(log.timestamp)}</td>
+            ${jobNameCell}
             <td>
                 <span class="status-badge ${log.status.toLowerCase()}">
                     <span class="status-icon">${statusIcon}</span>
                     ${log.status}
                 </span>
             </td>
-            <td>${log.duration.toFixed(2)}</td>
+            <td>${log.duration.toFixed(2)}s</td>
             <td class="output-cell" title="${log.output || ''}">${log.output || '-'}</td>
         `;
         tbody.appendChild(row);
@@ -218,11 +266,10 @@ jobSelect.addEventListener('change', async (e) => {
     state.selectedJobId = e.target.value;
     if (state.selectedJobId) {
         await fetchJobLogs(state.selectedJobId);
-        renderLogs();
     } else {
-        state.logs = [];
-        renderLogs();
+        await fetchAllLogs();
     }
+    renderLogs();
 });
 
 // ==================== Utility Functions ====================
@@ -324,11 +371,13 @@ async function refreshData() {
         if (jobsOk) {
             renderJobs();
 
-            // Refresh logs if a job is selected
+            // Refresh logs - show all jobs logs by default, or specific job if selected
             if (state.selectedJobId && state.jobs.some((j) => j.id === state.selectedJobId)) {
                 await fetchJobLogs(state.selectedJobId);
-                renderLogs();
+            } else {
+                await fetchAllLogs();
             }
+            renderLogs();
         }
 
         updateLastRefresh();

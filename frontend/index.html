@@ -32,7 +32,7 @@
                 <h2 class="section-title">📊 Recent Logs</h2>
                 <div class="logs-controls">
                     <select id="jobSelect" class="job-select">
-                        <option value="">Select a job to view logs</option>
+                        <option value="">All Jobs (Default) - View recent logs from all automations</option>
                     </select>
                 </div>
                 <div id="logsList" class="logs-table-container">
@@ -40,6 +40,7 @@
                         <thead>
                             <tr>
                                 <th>Timestamp</th>
+                                <th id="jobHeader" class="job-header" style="display:none;">Job</th>
                                 <th>Status</th>
                                 <th>Duration (s)</th>
                                 <th>Output</th>
@@ -47,7 +48,7 @@
                         </thead>
                         <tbody id="logsTableBody">
                             <tr class="empty-state">
-                                <td colspan="4">Select a job to view logs</td>
+                                <td colspan="5">Loading recent logs from all jobs...</td>
                             </tr>
                         </tbody>
                     </table>
