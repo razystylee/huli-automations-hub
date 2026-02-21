@@ -12,6 +12,7 @@ from fastapi import APIRouter, HTTPException
 
 from backend.scheduler.job_scheduler import get_scheduler
 from backend.models.job import Job
+from backend.utils.cron_formatter import format_schedule_display
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/jobs", tags=["jobs"])
@@ -47,6 +48,7 @@ class JobStatusResponse:
             "name": self.name,
             "script": self.script,
             "schedule": self.schedule,
+            "schedule_display": format_schedule_display(self.schedule),
             "timeout": self.timeout,
             "next_run": self.next_run,
             "last_run": self.last_run,
