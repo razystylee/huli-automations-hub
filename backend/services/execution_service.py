@@ -15,6 +15,7 @@ from datetime import datetime
 from typing import Tuple, Optional
 from pathlib import Path
 
+from backend.config.config import config
 from backend.models.job import JobStatus
 
 logger = logging.getLogger(__name__)
@@ -36,7 +37,7 @@ class ExecutionResult:
         self.stderr = stderr
         self.duration = duration
         self.error = error
-        self.timestamp = datetime.utcnow()
+        self.timestamp = datetime.now(config.TZ)
 
     def to_dict(self) -> dict:
         """Convert result to dictionary"""
