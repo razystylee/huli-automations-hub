@@ -161,12 +161,12 @@ class LoggingService:
         """
         from datetime import timedelta
 
-        threshold_time = datetime.utcnow() - timedelta(days=days)
+        threshold_time = datetime.now(config.TZ) - timedelta(days=days)
         deleted_count = 0
 
         try:
             for log_file in self.logs_dir.glob("*.json"):
-                file_mtime = datetime.utcfromtimestamp(log_file.stat().st_mtime)
+                file_mtime = datetime.fromtimestamp(log_file.stat().st_mtime, tz=config.TZ)
 
                 if file_mtime < threshold_time:
                     log_file.unlink()
@@ -196,7 +196,7 @@ class LoggingService:
             # Convert logs to dict format
             logs_data = {
                 "job_id": job_id,
-                "updated_at": datetime.utcnow().isoformat(),
+                "updated_at": datetime.now(config.TZ).isoformat(),
                 "logs": [
                     {
                         "timestamp": log.timestamp.isoformat(),
@@ -231,7 +231,7 @@ class LoggingService:
             Path to log file
         """
         # Format: {job_id}_YYYY-MM-DD.json
-        today = datetime.utcnow().strftime("%Y-%m-%d")
+        today = datetime.now(config.TZ).strftime("%Y-%m-%d")
         filename = f"{job_id}_{today}.json"
         return self.logs_dir / filename
 

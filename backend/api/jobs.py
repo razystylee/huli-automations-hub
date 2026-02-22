@@ -12,6 +12,7 @@ from fastapi import APIRouter, HTTPException
 
 from backend.scheduler.job_scheduler import get_scheduler
 from backend.models.job import Job
+from backend.utils.cron_formatter import format_schedule_display
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/jobs", tags=["jobs"])
@@ -29,10 +30,17 @@ class JobStatusResponse:
 
         # Get current state from scheduler
         state = scheduler.get_job_state(job.id)
-        self.next_run = state.next_run_time.isoformat() if state.next_run_time else None
         self.last_run = state.last_run_time.isoformat() if state.last_run_time else None
         self.last_status = state.last_run_status.value if state.last_run_status else None
         self.is_running = state.is_running
+
+        # Get next_run_time directly from APScheduler (always current, not cached)
+        self.next_run = None
+        if scheduler.scheduler and scheduler.scheduler.running:
+            for scheduled_job in scheduler.scheduler.get_jobs():
+                if scheduled_job.id == job.id:
+                    self.next_run = scheduled_job.next_run_time.isoformat() if scheduled_job.next_run_time else None
+                    break
 
     def to_dict(self):
         return {
@@ -40,6 +48,7 @@ class JobStatusResponse:
             "name": self.name,
             "script": self.script,
             "schedule": self.schedule,
+            "schedule_display": format_schedule_display(self.schedule),
             "timeout": self.timeout,
             "next_run": self.next_run,
             "last_run": self.last_run,

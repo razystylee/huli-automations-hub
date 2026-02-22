@@ -5,6 +5,9 @@ fastapi>=0.109.0
 uvicorn>=0.27.0
 httpx>=0.24.0
 
+# Database & Supabase
+supabase>=2.4.0
+
 # Job Scheduler
 apscheduler>=3.10.4
 pytz>=2024.1
@@ -14,6 +17,14 @@ python-dotenv>=1.0.0
 
 # HTTP Requests
 requests>=2.31.0
+
+# Google APIs (for google_docs_editor integration)
+google-auth>=2.25.0
+google-auth-oauthlib>=1.1.0
+google-api-python-client>=2.96.0
+
+# Hotmart API
+hotmart-python>=0.1.0
 
 # Utilities
 pydantic>=2.6.0

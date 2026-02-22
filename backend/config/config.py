@@ -1,5 +1,5 @@
 """
-Configuration module for Huli Automations Hub - Mission Control
+Configuration module for Huli-VELLHUB
 
 Loads environment variables from .env file and provides base configuration
 for the FastAPI application and APScheduler.
@@ -19,7 +19,7 @@ class Config:
     """Base configuration class"""
 
     # Application
-    APP_NAME = "Huli Automations Hub - Mission Control"
+    APP_NAME = "Huli-VELLHUB"
     APP_VERSION = "1.0.0"
     DEBUG = os.getenv("DEBUG", "False").lower() == "true"
 
@@ -49,6 +49,11 @@ class Config:
     # Scheduler
     SCHEDULER_ENABLED = os.getenv("SCHEDULER_ENABLED", "True").lower() == "true"
 
+    # Supabase Configuration
+    SUPABASE_URL = os.getenv("SUPABASE_URL", "")
+    SUPABASE_ANON_KEY = os.getenv("SUPABASE_ANON_KEY", "")
+    SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "")
+
     # Credentials (from environment)
     HOTMART_CLIENT_ID = os.getenv("HOTMART_CLIENT_ID", "")
     HOTMART_CLIENT_SECRET = os.getenv("HOTMART_CLIENT_SECRET", "")
@@ -59,7 +64,7 @@ class Config:
 
     # Logging
     LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
-    LOG_FORMAT = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    LOG_FORMAT = "%(asctime)s [%(name)s] %(levelname)s - %(message)s"
 
     # Execution
     DEFAULT_JOB_TIMEOUT = int(os.getenv("DEFAULT_JOB_TIMEOUT", 300))  # 5 minutes

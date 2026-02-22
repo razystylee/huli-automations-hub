@@ -6,6 +6,7 @@ Endpoints for viewing execution logs and manually triggering jobs
 
 import logging
 from typing import Optional
+from pathlib import Path
 
 from fastapi import APIRouter, HTTPException
 
@@ -85,7 +86,9 @@ async def execute_job(job_id: str):
         logger.info(f"Manual execution triggered for job: {job_id}")
 
         # Execute job synchronously
-        execution_service = get_execution_service()
+        # Pass the correct base path for script resolution
+        base_path = str(Path(__file__).parent.parent.parent)  # /HULI-VELL
+        execution_service = get_execution_service(base_path=base_path)
         result = execution_service.execute_script(job.script, timeout=job.timeout)
 
         # Log the execution
