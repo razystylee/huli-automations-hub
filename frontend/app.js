@@ -7,8 +7,10 @@
 const CONFIG = {
     API_BASE_URL: '',
     REFRESH_INTERVAL: 30 * 1000, // 30 seconds
+    ANALYTICS_REFRESH_INTERVAL: 5 * 60 * 1000, // 5 minutes
     LOG_LIMIT: 10,
     TOAST_DURATION: 4000,
+    ANALYTICS_DAYS: 30,
 };
 
 // State
@@ -18,6 +20,9 @@ let state = {
     logs: [],
     isAutoRefreshEnabled: true,
     lastRefreshTime: null,
+    analyticsData: null,
+    healthData: null,
+    executionChart: null,
 };
 
 // UI Elements
@@ -126,7 +131,7 @@ async function executeJob(jobId) {
 
 async function fetchHealthStatus() {
     try {
-        const response = await fetch(`${CONFIG.API_BASE_URL}/api/health`);
+        const response = await fetch(`${CONFIG.API_BASE_URL}/health`);
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
         const data = await response.json();
@@ -135,6 +140,47 @@ async function fetchHealthStatus() {
     } catch (error) {
         console.error('Error fetching health status:', error);
         updateSchedulerStatus(false);
+        return false;
+    }
+}
+
+async function fetchAnalyticsData() {
+    try {
+        // Get the first job ID from state.jobs
+        if (state.jobs.length === 0) {
+            console.log('No jobs available for analytics');
+            return false;
+        }
+
+        const jobId = state.jobs[0].id;
+        const url = `${CONFIG.API_BASE_URL}/api/analytics/executions/${jobId}?days=${CONFIG.ANALYTICS_DAYS}&limit=100`;
+        const response = await fetch(url);
+
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+        const data = await response.json();
+        state.analyticsData = data;
+        return true;
+    } catch (error) {
+        console.warn('Analytics data not available:', error);
+        // Silently fail - analytics is optional and data builds up over time
+        return false;
+    }
+}
+
+async function fetchHealthData() {
+    try {
+        const url = `${CONFIG.API_BASE_URL}/api/analytics/skills/health`;
+        const response = await fetch(url);
+
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+        const data = await response.json();
+        state.healthData = data;
+        return true;
+    } catch (error) {
+        console.warn('Health data not available:', error);
+        // Silently fail - health data is optional
         return false;
     }
 }
@@ -245,6 +291,191 @@ function renderLogs() {
         `;
         tbody.appendChild(row);
     });
+}
+
+function renderAnalytics() {
+    if (!state.analyticsData) {
+        console.log('No analytics data to render');
+        return;
+    }
+
+    const { executions, stats } = state.analyticsData;
+
+    // Update stats summary
+    document.getElementById('totalRuns').textContent = stats.total_runs;
+    document.getElementById('successRate').textContent = `${stats.success_rate.toFixed(1)}%`;
+    document.getElementById('avgDuration').textContent = `${stats.avg_duration.toFixed(2)}s`;
+
+    // Prepare chart data
+    if (!executions || executions.length === 0) {
+        console.log('No execution data for chart');
+        return;
+    }
+
+    // Sort executions by date ascending
+    const sortedExecutions = executions.slice().sort((a, b) =>
+        new Date(a.executed_at) - new Date(b.executed_at)
+    );
+
+    // Group by date
+    const dateGroups = {};
+    sortedExecutions.forEach((exec) => {
+        const date = new Date(exec.executed_at).toLocaleDateString('pt-BR');
+        if (!dateGroups[date]) {
+            dateGroups[date] = { success: 0, error: 0, duration: 0, count: 0 };
+        }
+        dateGroups[date].count += 1;
+        dateGroups[date].duration += exec.duration_seconds;
+        if (exec.status === 'SUCCESS') {
+            dateGroups[date].success += 1;
+        } else {
+            dateGroups[date].error += 1;
+        }
+    });
+
+    const labels = Object.keys(dateGroups);
+    const successData = labels.map((date) => dateGroups[date].success);
+    const errorData = labels.map((date) => dateGroups[date].error);
+    const durationData = labels.map((date) => (dateGroups[date].duration / dateGroups[date].count).toFixed(2));
+
+    // Destroy existing chart if it exists
+    if (state.executionChart) {
+        state.executionChart.destroy();
+    }
+
+    // Create chart
+    const ctx = document.getElementById('executionChart').getContext('2d');
+    state.executionChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: 'Successful Executions',
+                    data: successData,
+                    backgroundColor: '#10b981',
+                    borderColor: '#059669',
+                    borderWidth: 1,
+                    order: 2,
+                },
+                {
+                    label: 'Failed Executions',
+                    data: errorData,
+                    backgroundColor: '#ef4444',
+                    borderColor: '#dc2626',
+                    borderWidth: 1,
+                    order: 2,
+                },
+                {
+                    label: 'Avg Duration (s)',
+                    data: durationData,
+                    type: 'line',
+                    borderColor: '#2563eb',
+                    backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.4,
+                    order: 1,
+                    yAxisID: 'y1',
+                },
+            ],
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            interaction: {
+                mode: 'index',
+                intersect: false,
+            },
+            plugins: {
+                legend: {
+                    position: 'top',
+                    labels: {
+                        font: {
+                            size: 12,
+                        },
+                        padding: 15,
+                    },
+                },
+            },
+            scales: {
+                y: {
+                    type: 'linear',
+                    display: true,
+                    position: 'left',
+                    title: {
+                        display: true,
+                        text: 'Execution Count',
+                    },
+                },
+                y1: {
+                    type: 'linear',
+                    display: true,
+                    position: 'right',
+                    title: {
+                        display: true,
+                        text: 'Duration (seconds)',
+                    },
+                    grid: {
+                        drawOnChartArea: false,
+                    },
+                },
+            },
+        },
+    });
+}
+
+function renderHealthStatus() {
+    if (!state.healthData) {
+        console.log('No health data to render');
+        return;
+    }
+
+    const { skills, healthy_count } = state.healthData;
+    const healthContainer = document.getElementById('apiHealthStatus');
+    healthContainer.innerHTML = '';
+
+    if (!skills || Object.keys(skills).length === 0) {
+        healthContainer.innerHTML = '<div class="empty-state">No API data available</div>';
+        return;
+    }
+
+    Object.entries(skills).forEach(([apiName, health]) => {
+        const statusClass = health.status.toLowerCase();
+        const statusIcon = health.status === 'UP' ? '✅' : health.status === 'DEGRADED' ? '⚠️' : '❌';
+
+        const card = document.createElement('div');
+        card.className = `health-card ${statusClass}`;
+        card.innerHTML = `
+            <div class="health-api-name">${apiName}</div>
+            <div class="health-status">
+                <span class="health-icon">${statusIcon}</span>
+                <span class="health-text">${health.status}</span>
+            </div>
+            <div class="health-details">
+                <div class="detail-item">
+                    <span class="detail-label">Response:</span>
+                    <span class="detail-value">${health.response_time_ms}ms</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">HTTP:</span>
+                    <span class="detail-value">${health.http_status || 'N/A'}</span>
+                </div>
+            </div>
+            ${health.error ? `<div class="health-error">${health.error}</div>` : ''}
+        `;
+        healthContainer.appendChild(card);
+    });
+
+    // Update summary counts
+    const allApis = Object.values(skills);
+    const healthyCount = allApis.filter((h) => h.status === 'UP').length;
+    const degradedCount = allApis.filter((h) => h.status === 'DEGRADED').length;
+    const downCount = allApis.filter((h) => h.status === 'DOWN').length;
+
+    document.getElementById('healthyCount').textContent = healthyCount;
+    document.getElementById('degradedCount').textContent = degradedCount;
+    document.getElementById('downCount').textContent = downCount;
 }
 
 // ==================== Event Handlers ====================
@@ -386,16 +617,53 @@ async function refreshData() {
     }
 }
 
+async function refreshAnalytics() {
+    try {
+        const start = performance.now();
+
+        const [analyticsOk, healthOk] = await Promise.all([
+            fetchAnalyticsData(),
+            fetchHealthData(),
+        ]);
+
+        if (analyticsOk) {
+            renderAnalytics();
+        }
+
+        if (healthOk) {
+            renderHealthStatus();
+        }
+
+        const duration = performance.now() - start;
+        console.log(`Analytics refresh completed in ${duration.toFixed(0)}ms`);
+
+        // Warn if performance exceeds SLA
+        if (duration > 7000) {
+            console.warn(`⚠️ Analytics refresh exceeded 7s SLA (${duration.toFixed(0)}ms)`);
+        }
+    } catch (error) {
+        console.error('Error refreshing analytics:', error);
+    }
+}
+
 function startAutoRefresh() {
     // Initial refresh
     refreshData();
+    refreshAnalytics();
 
-    // Refresh every N seconds
+    // Refresh job status every 30 seconds
     setInterval(() => {
         if (state.isAutoRefreshEnabled) {
             refreshData();
         }
     }, CONFIG.REFRESH_INTERVAL);
+
+    // Refresh analytics every 5 minutes
+    setInterval(() => {
+        if (state.isAutoRefreshEnabled) {
+            refreshAnalytics();
+        }
+    }, CONFIG.ANALYTICS_REFRESH_INTERVAL);
 
     // Update countdown every second
     setInterval(() => {

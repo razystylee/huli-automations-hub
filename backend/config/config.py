@@ -49,6 +49,11 @@ class Config:
     # Scheduler
     SCHEDULER_ENABLED = os.getenv("SCHEDULER_ENABLED", "True").lower() == "true"
 
+    # Supabase Configuration
+    SUPABASE_URL = os.getenv("SUPABASE_URL", "")
+    SUPABASE_ANON_KEY = os.getenv("SUPABASE_ANON_KEY", "")
+    SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "")
+
     # Credentials (from environment)
     HOTMART_CLIENT_ID = os.getenv("HOTMART_CLIENT_ID", "")
     HOTMART_CLIENT_SECRET = os.getenv("HOTMART_CLIENT_SECRET", "")

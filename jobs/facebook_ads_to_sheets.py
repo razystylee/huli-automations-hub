@@ -11,17 +11,22 @@ import requests
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
 
-# Carregar variáveis de ambiente
+# Carregar variáveis de ambiente (de .env ou Railway)
 env_path = os.path.expanduser('~/.openclaw/secrets/facebook_ads.env')
 if os.path.exists(env_path):
     load_dotenv(env_path)
 else:
-    print(f"❌ Arquivo de credenciais não encontrado: {env_path}")
-    sys.exit(1)
+    # Em produção (Railway), as variáveis vêm direto do ambiente
+    pass
 
 # Configurações
 FACEBOOK_API_VERSION = os.getenv('FACEBOOK_API_VERSION', 'v23.0')
 ACCESS_TOKEN = os.getenv('FACEBOOK_ACCESS_TOKEN')
+
+# Validar credenciais
+if not ACCESS_TOKEN:
+    print("❌ FACEBOOK_ACCESS_TOKEN não configurado")
+    sys.exit(1)
 BASE_URL = f"https://graph.facebook.com/{FACEBOOK_API_VERSION}"
 
 # Contas de anúncios (remove o 'act_' se estiver presente)
@@ -200,33 +205,98 @@ def format_data_for_sheets(insights, account_name):
 
 
 def send_to_sheets(rows, sheet_id, range_name="Dados!A:S"):
-    """Envia dados para Google Sheets usando gog"""
+    """Envia dados para Google Sheets usando Google Sheets API"""
     if not rows:
         print("⚠️ Nenhum dado para enviar")
         return False
-    
+
     try:
         print(f"📤 Enviando {len(rows)} registros para o Sheets...")
-        
-        import subprocess
-        values_json = json.dumps(rows)
-        
-        cmd = [
-            'gog', 'sheets', 'append', sheet_id, range_name,
-            '--values-json', values_json,
-            '--insert', 'INSERT_ROWS',
-            '--account', 'margotvellanibot@gmail.com'
-        ]
-        
-        result = subprocess.run(cmd, capture_output=True, text=True)
-        
-        if result.returncode == 0:
-            print(f"✅ {len(rows)} registros inseridos na planilha!")
-            return True
-        else:
-            print(f"❌ Erro ao enviar: {result.stderr}")
+
+        from google.auth.transport.requests import Request
+        from google.oauth2.credentials import Credentials
+        from google_auth_oauthlib.flow import InstalledAppFlow
+        from google.auth.exceptions import RefreshError
+        from googleapiclient.discovery import build
+        from googleapiclient.errors import HttpError
+        import json
+
+        # Scopes necessários
+        SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
+
+        # Obter credenciais do Google
+        creds = None
+        credentials_json_str = os.getenv('GOOGLE_CREDENTIALS_JSON')
+
+        if not credentials_json_str:
+            print("❌ Variável GOOGLE_CREDENTIALS_JSON não configurada")
+            print("ℹ️ Configure a variável de ambiente no Railway")
             return False
-            
+
+        try:
+            # Parse do JSON da variável de ambiente
+            credentials_dict = json.loads(credentials_json_str)
+
+            # Tentar usar refresh token (em produção)
+            refresh_token = os.getenv('GOOGLE_REFRESH_TOKEN')
+
+            if refresh_token:
+                # Usar refresh token para autenticação automática
+                from google.oauth2.credentials import Credentials
+
+                creds = Credentials(
+                    token=None,
+                    refresh_token=refresh_token,
+                    token_uri='https://oauth2.googleapis.com/token',
+                    client_id=credentials_dict['installed']['client_id'],
+                    client_secret=credentials_dict['installed']['client_secret']
+                )
+
+                # Atualizar token se necessário
+                from google.auth.transport.requests import Request
+                creds.refresh(Request())
+
+            else:
+                # Fallback: tentar autenticação interativa (para local)
+                flow = InstalledAppFlow.from_client_config(credentials_dict, SCOPES)
+                try:
+                    creds = flow.run_local_server(port=0, timeout_seconds=5)
+                except:
+                    print("⚠️ Não foi possível fazer autenticação")
+                    print("ℹ️ Configure GOOGLE_REFRESH_TOKEN no Railway")
+                    return False
+
+            # Construir serviço do Sheets
+            service = build('sheets', 'v4', credentials=creds)
+
+            # Preparar dados para inserção
+            body = {
+                'values': rows
+            }
+
+            # Executar requisição
+            result = service.spreadsheets().values().append(
+                spreadsheetId=sheet_id,
+                range=range_name,
+                valueInputOption='RAW',
+                body=body
+            ).execute()
+
+            print(f"✅ {len(rows)} registros inseridos na planilha!")
+            print(f"📊 Atualizações: {result.get('updates', {}).get('updatedRows', len(rows))}")
+            return True
+
+        except HttpError as error:
+            print(f"❌ Erro na API: {error}")
+            return False
+        except json.JSONDecodeError:
+            print("❌ Erro ao decodificar credenciais JSON")
+            return False
+
+    except ImportError as e:
+        print(f"❌ Erro ao importar bibliotecas do Google: {e}")
+        print("ℹ️ Certifique-se de que google-auth-oauthlib está instalado")
+        return False
     except Exception as e:
         print(f"❌ Erro: {e}")
         return False

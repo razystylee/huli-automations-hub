@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Huli-VELLHUB</title>
     <link rel="stylesheet" href="style.css">
+    <!-- Chart.js 3.9.1 -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
 </head>
 <body>
     <div class="container">
@@ -54,11 +56,62 @@
                     </table>
                 </div>
             </section>
+
+            <!-- Analytics Section -->
+            <section class="analytics-section">
+                <h2 class="section-title">📈 Analytics Dashboard</h2>
+
+                <!-- Execution History Chart -->
+                <div class="analytics-grid">
+                    <div class="chart-container">
+                        <h3 class="chart-title">Job Execution History (30 days)</h3>
+                        <div class="chart-wrapper">
+                            <canvas id="executionChart"></canvas>
+                        </div>
+                        <div id="executionStats" class="stats-summary">
+                            <div class="stat-item">
+                                <span class="stat-label">Total Runs:</span>
+                                <span id="totalRuns" class="stat-value">-</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Success Rate:</span>
+                                <span id="successRate" class="stat-value">-</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Avg Duration:</span>
+                                <span id="avgDuration" class="stat-value">-</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- API Health Status -->
+                    <div class="health-container">
+                        <h3 class="chart-title">Skills & Tools Status</h3>
+                        <div id="apiHealthStatus" class="health-grid">
+                            <div class="empty-state">Loading API status...</div>
+                        </div>
+                        <div id="healthSummary" class="health-summary">
+                            <div class="health-stat">
+                                <span class="health-label">Healthy:</span>
+                                <span id="healthyCount" class="health-value">0</span>
+                            </div>
+                            <div class="health-stat">
+                                <span class="health-label">Degraded:</span>
+                                <span id="degradedCount" class="health-value">0</span>
+                            </div>
+                            <div class="health-stat">
+                                <span class="health-label">Down:</span>
+                                <span id="downCount" class="health-value">0</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
         </main>
 
         <!-- Footer -->
         <footer class="footer">
-            <p>Huli Automations Hub • Auto-refreshing every 30 seconds</p>
+            <p>Huli Automations Hub • Jobs: every 30s | Analytics: every 5min</p>
             <p id="refreshInfo" class="refresh-info"></p>
         </footer>
     </div>
